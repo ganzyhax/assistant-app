@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098879051348",
+    "project_id": "assistant-app-iitu",
+    "storage_bucket": "assistant-app-iitu.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098879051348:android:710381acbd67bb944eafc1",
+        "android_client_info": {
+          "package_name": "com.example.assistant_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAd8K7uEP-ZS2Jep3Xi5ZWvdVysSAepQdI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,7 @@
+import 'package:assistant_app/app/screens/navigator/bloc/main_navigator_bloc.dart';
 import 'package:assistant_app/const/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class CustomAppBar extends StatelessWidget {
   final bool? withButtonAdd;
@@ -16,16 +18,22 @@ class CustomAppBar extends StatelessWidget {
           width: 120,
         ),
         (withButtonAdd == true)
-            ? Container(
-                decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12)),
-                padding: EdgeInsets.all(5),
-                child: Center(
-                  child: Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 30,
+            ? InkWell(
+                onTap: () {
+                  BlocProvider.of<MainNavigatorBloc>(context)
+                    ..add(MainNavigatorChangePage(index: 1));
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: EdgeInsets.all(5),
+                  child: Center(
+                    child: Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
                 ),
               )

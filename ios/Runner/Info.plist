@@ -49,5 +49,7 @@
 	<string>For get user location</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>For get user location</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>For upload your images</string>
 </dict>
 </plist>

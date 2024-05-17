@@ -8,31 +8,11 @@ import 'package:assistant_app/app/widgets/appbar/custom_appbar.dart';
 import 'package:assistant_app/app/widgets/buttons/custom_button.dart';
 import 'package:assistant_app/app/widgets/textfields/custom_textfiled.dart';
 import 'package:assistant_app/const/app_colors.dart';
+import 'package:assistant_app/function/functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
-
-  @override
-  _ProfileScreenState createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  late Future<DocumentSnapshot> userDataFuture;
-  TextEditingController nameController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    userDataFuture = _fetchUserData();
-  }
-
-  Future<DocumentSnapshot> _fetchUserData() async {
-    String? userId = await SecureStorage().getData('userId');
-    return FirebaseFirestore.instance.collection('users').doc(userId).get();
-  }
-
+class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,93 +21,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
         preferredSize: Size.fromHeight(60),
         child: CustomAppBar(),
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-          future: userDataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return CircularProgressIndicator();
-            }
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: _getUserDataStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            }
+          if (snapshot.hasError) {
+            return Text('Error: ${snapshot.error}');
+          }
 
-            Map<String, dynamic> userData =
-                snapshot.data!.data() as Map<String, dynamic>;
-            final username = userData['name'] ?? '';
+          Map<String, dynamic> userData =
+              snapshot.data!.data() as Map<String, dynamic>;
+          final username = userData['name'] ?? '';
+          var userImage = userData['image'].toString();
+          TextEditingController nameController =
+              TextEditingController(text: username);
 
-            nameController.text = username;
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    SizedBox(height: 40),
-                    Center(
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  SizedBox(height: 40),
+                  InkWell(
+                    onTap: () async {
+                      String image =
+                          await GlobalFunctions().uploadImageToImgBB(context);
+
+                      if (image != 'null') {
+                        await ApiClient().updateData(
+                            'users', userData['usersId'], {'image': image});
+                      } else {
+                        // Handle the case where the image upload failed
+                      }
+                    },
+                    child: Center(
                       child: ClipOval(
                         child: SizedBox.fromSize(
                           size: Size.fromRadius(68),
                           child: Image.network(
-                            'https://artscimedia.case.edu/wp-content/uploads/sites/79/2016/12/14205134/no-user-image.gif',
+                            (userImage == '')
+                                ? 'https://artscimedia.case.edu/wp-content/uploads/sites/79/2016/12/14205134/no-user-image.gif'
+                                : userImage,
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: 20),
-                    CustomTextField(
-                      hintText: 'Name',
-                      controller: nameController,
-                    ),
-                    SizedBox(height: 20),
-                    CustomButton(
-                      text: 'Change',
-                      function: () async {
-                        userData['name'] = nameController.text;
-                        await ApiClient()
-                            .updateData('users', userData['usersId'], userData);
-                        const snackBar = SnackBar(
-                          content: Text('User name updated succesfully!'),
-                        );
-
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                      },
-                    ),
-                    SizedBox(height: 20),
-                    Divider(),
-                    SizedBox(height: 20),
-                    // My Posts ListTile
-                    _buildListTile(
-                      Icons.post_add,
-                      'My posts',
-                      'Active/All',
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ProfilePostsPage()),
+                  ),
+                  SizedBox(height: 20),
+                  CustomTextField(
+                    hintText: 'Name',
+                    controller: nameController,
+                  ),
+                  SizedBox(height: 20),
+                  CustomButton(
+                    text: 'Change',
+                    function: () async {
+                      await ApiClient().updateData('users', userData['usersId'],
+                          {'name': nameController.text});
+                      const snackBar = SnackBar(
+                        content: Text('User name updated successfully!'),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                    },
+                  ),
+                  SizedBox(height: 20),
+                  Divider(),
+                  SizedBox(height: 20),
+                  // My Posts ListTile
+                  _buildListTile(
+                    Icons.post_add,
+                    'My posts',
+                    'Active/All',
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfilePostsPage(),
                       ),
                     ),
-                    SizedBox(height: 20),
-                    // Log Out ListTile
-                    _buildListTile(
-                      Icons.logout,
-                      'Log out',
-                      '',
-                      () async {
-                        await SecureStorage().clear();
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (context) => SplashScreen()),
-                          (Route<dynamic> route) => false,
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 20),
+                  // Log Out ListTile
+                  _buildListTile(
+                    Icons.logout,
+                    'Log out',
+                    '',
+                    () async {
+                      await SecureStorage().clear();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => SplashScreen(),
+                        ),
+                        (Route<dynamic> route) => false,
+                      );
+                    },
+                  ),
+                ],
               ),
-            );
-          }),
+            ),
+          );
+        },
+      ),
     );
+  }
+
+  Stream<DocumentSnapshot> _getUserDataStream() async* {
+    String? userId = await SecureStorage().getData('userId');
+    yield* FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots();
   }
 
   Widget _buildListTile(

@@ -11,6 +11,26 @@ class ApiClient {
         .toList();
   }
 
+  Future<Map<String, dynamic>?> getDocumentById(
+      String collectionName, String documentId) async {
+    try {
+      DocumentSnapshot documentSnapshot =
+          await _firestore.collection(collectionName).doc(documentId).get();
+
+      if (documentSnapshot.exists) {
+        // Document exists, return its data
+        return documentSnapshot.data() as Map<String, dynamic>;
+      } else {
+        // Document does not exist
+        return null;
+      }
+    } catch (e) {
+      // Handle errors
+      print("Error: $e");
+      return null;
+    }
+  }
+
   Future<String> createData(
       String collectionName, Map<String, dynamic> newData) async {
     String documentId =
